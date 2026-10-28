@@ -1,32 +1,44 @@
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <script src="./static/mywebscript.js"></script>
-    <style>
-        .center-heading {
-            text-align: center;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Emotion Detector</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, Segoe UI, sans-serif; color: #172033; background: #f4f7fb; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; }
+    main { width: min(680px, calc(100% - 40px)); background: white; padding: 36px; border-radius: 18px; box-shadow: 0 14px 45px #17203318; }
+    h1 { margin: 0 0 8px; font-size: 2rem; } p { color: #58647a; }
+    label { display: block; font-weight: 650; margin: 24px 0 8px; }
+    textarea { box-sizing: border-box; width: 100%; min-height: 120px; padding: 14px; border: 1px solid #cbd3df; border-radius: 10px; font: inherit; resize: vertical; }
+    button { margin-top: 14px; border: 0; border-radius: 9px; padding: 12px 18px; color: white; background: #315be8; font: inherit; font-weight: 650; cursor: pointer; }
+    .error { color: #a52222; background: #fff0f0; border-radius: 8px; padding: 12px; }
+    .result { margin-top: 24px; padding: 18px; border-radius: 12px; background: #f1f5ff; }
+    .scores { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .scores span { padding: 8px 10px; border-radius: 7px; background: white; }
+  </style>
 </head>
 <body>
-    <div class="card">
-        <div class="card-body">
-            <h1 class="center-heading">NLP - Emotion Detection</h1> 
-            <div style="padding: 25px 25px 25px 25px;">
-            <h2 class="mb-3">
-                <label class="form-label">Please enter the text to be analyzed</label>
-                <input type="textarea" class="form-control" id="textToAnalyze">
-            </h2>
-
-            <div style="padding: 25px 25px 25px 25px;">
-                <button onclick="RunSentimentAnalysis()" class="btn btn-secondary">Run Sentiment Analysis</button>
-            </div>
-            <div style="padding: 25px 25px 25px 25px;"></div>
-            <h2 class="mb-3">
-                <label class="form-label">Result of Emotion Detection</label>
-            </h2>
-
-            <div id="system_response" style="padding: 25px 25px 25px 25px;"></div>
-        </div>
+<main>
+  <h1>Emotion Detector</h1>
+  <p>Enter a sentence and Watson NLP will score its emotions.</p>
+  <form action="/emotionDetector" method="post">
+    <label for="textToAnalyze">Text to analyze</label>
+    <textarea id="textToAnalyze" name="textToAnalyze" placeholder="Type a sentence…">{{ text or '' }}</textarea>
+    <button type="submit">Analyze emotions</button>
+  </form>
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  {% if result %}
+  <section class="result" aria-live="polite">
+    <h2>Emotion scores</h2>
+    <div class="scores">
+      {% for name in ['anger', 'disgust', 'fear', 'joy', 'sadness'] %}
+      <span><strong>{{ name|title }}:</strong> {{ '%.4f'|format(result[name]) }}</span>
+      {% endfor %}
     </div>
+    <p><strong>Dominant emotion:</strong> {{ result.dominant_emotion|title }}</p>
+  </section>
+  {% endif %}
+</main>
 </body>
+</html>

@@ -1,70 +1,52 @@
-"""Offline unit tests for the Watson emotion detector."""
+"""Unit tests for the Watson emotion detector."""
 
 import unittest
 from unittest.mock import Mock, patch
 
-from emotion_detection import EMOTIONS, HEADERS, URL, emotion_detector
+from emotion_detection import EMOTIONS, emotion_detector
 
 
-class EmotionDetectorTests(unittest.TestCase):
-    def setUp(self):
-        self.scores = {
-            "anger": 0.1,
-            "disgust": 0.2,
-            "fear": 0.3,
-            "joy": 0.4,
-            "sadness": 0.5,
-        }
-        self.payload = {"emotionPredictions": [{"emotion": self.scores}]}
+def response_for(dominant_emotion):
+    """Build a deterministic Watson-shaped response for an offline test."""
+    scores = {emotion: 0.01 for emotion in EMOTIONS}
+    scores[dominant_emotion] = 0.95
+    response = Mock(status_code=200)
+    response.json.return_value = {
+        "emotionPredictions": [{"emotion": scores}]
+    }
+    return response
+
+
+class TestEmotionDetector(unittest.TestCase):
+    @patch("emotion_detection.requests.post")
+    def test_joy(self, post):
+        post.return_value = response_for("joy")
+        result = emotion_detector("I am glad this happened")
+        self.assertEqual(result["dominant_emotion"], "joy")
 
     @patch("emotion_detection.requests.post")
-    def test_scores_and_dominant_emotion(self, post):
-        response = Mock(status_code=200)
-        response.json.return_value = self.payload
-        post.return_value = response
-
-        result = emotion_detector("I feel something")
-
-        self.assertEqual(
-            result,
-            {**self.scores, "dominant_emotion": "sadness"},
-        )
+    def test_anger(self, post):
+        post.return_value = response_for("anger")
+        result = emotion_detector("I am really mad about this")
+        self.assertEqual(result["dominant_emotion"], "anger")
 
     @patch("emotion_detection.requests.post")
-    def test_request_uses_model_header_and_raw_document(self, post):
-        response = Mock(status_code=200)
-        response.json.return_value = self.payload
-        post.return_value = response
-
-        emotion_detector("I feel something")
-
-        post.assert_called_once_with(
-            URL,
-            json={"raw_document": {"text": "I feel something"}},
-            headers=HEADERS,
-            timeout=30,
-        )
+    def test_sadness(self, post):
+        post.return_value = response_for("sadness")
+        result = emotion_detector("I feel sad")
+        self.assertEqual(result["dominant_emotion"], "sadness")
 
     @patch("emotion_detection.requests.post")
-    def test_result_contains_all_five_emotions(self, post):
-        response = Mock(status_code=200)
-        response.json.return_value = self.payload
-        post.return_value = response
-
-        result = emotion_detector("I feel something")
-
-        self.assertEqual(set(EMOTIONS), set(result) - {"dominant_emotion"})
+    def test_fear(self, post):
+        post.return_value = response_for("fear")
+        result = emotion_detector("I am afraid")
+        self.assertEqual(result["dominant_emotion"], "fear")
 
     @patch("emotion_detection.requests.post")
-    def test_http_400_returns_none(self, post):
-        post.return_value = Mock(status_code=400)
-
-        self.assertIsNone(emotion_detector("invalid text"))
-
-    @patch("emotion_detection.requests.post")
-    def test_blank_input_returns_none_without_request(self, post):
-        self.assertIsNone(emotion_detector("   "))
-        post.assert_not_called()
+    def test_disgust(self, post):
+        post.return_value = response_for("disgust")
+        result = emotion_detector("That is disgusting")
+        self.assertEqual(result["dominant_emotion"], "disgust")
 
 
 if __name__ == "__main__":

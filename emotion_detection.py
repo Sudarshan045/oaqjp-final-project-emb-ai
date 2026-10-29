@@ -12,14 +12,14 @@ HEADERS = {
 EMOTIONS = ("anger", "disgust", "fear", "joy", "sadness")
 
 
-def emotion_detector(text_to_analyze):
-    """Return the five emotion scores and the name of the dominant emotion."""
-    if not isinstance(text_to_analyze, str) or not text_to_analyze.strip():
+def emotion_detector(text_to_analyse):
+    """Return five emotion scores and the name of the dominant emotion."""
+    if not isinstance(text_to_analyse, str) or not text_to_analyse.strip():
         return None
 
     response = requests.post(
         URL,
-        json={"raw_document": {"text": text_to_analyze}},
+        json={"raw_document": {"text": text_to_analyse}},
         headers=HEADERS,
         timeout=30,
     )
